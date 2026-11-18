@@ -1,8 +1,25 @@
 # Portfolio and Admin Panel
 
 Static six-page portfolio, deployed with Netlify Functions and Netlify Blobs.
-The public contact form remains disconnected; contact records can only be
-created through the existing API until the next approved implementation step.
+The public Contact Form submits to the existing `POST /api/contact` endpoint.
+
+## Public Contact Form
+
+The form endpoint is configured as `/api/contact` in
+`site/content/site.json`; the build injects it into the generated Contact page.
+The browser sends JSON containing `name`, `email`, `phone`, `service`,
+`message`, and the empty `website` honeypot. The public endpoint does not require
+an admin session or CSRF token. It validates the fields and stores the message
+in the existing `portfolio-contact-messages` Netlify Blobs store before
+returning `201 {"ok":true}`. The Contact page only shows success after that
+response; request failures preserve the entered values.
+
+For local checks, run `npm test` and `npm run build`. To test the live form
+flow, run `netlify dev` with a linked site and Blobs-enabled Netlify
+environment, submit a test message through `/contact`, then sign in and verify
+it in `/admin/inbox`. Local Node tests use in-memory storage; they do not
+exercise hosted Netlify Blobs. The contact rate limiter is best-effort and
+per-warm-function-instance, and the honeypot is only a basic spam defense.
 
 ## Admin Panel
 
@@ -74,5 +91,7 @@ at 1,000 pages and 50 messages per page.
 Messages continue to use the Step 7A record shape
 `{ id, name, email, phone, service, message, createdAt, unread }` in the
 `portfolio-contact-messages` store under `messages/<uuid>`. The Admin Panel
-reads and updates those records directly; it does not provision sample messages
-or connect the public form.
+reads and updates those records directly; it does not provision sample messages.
+The public Contact Form posts to `/api/contact`, which stores accepted messages
+in the same `portfolio-contact-messages` store. Those messages then appear in
+the Admin Inbox; no sample messages are provisioned.

@@ -77,7 +77,7 @@
   function guard() {
     return requestJson("/api/auth/session").then(function (session) {
       if (!session.authenticated) {
-        window.location.replace("/admin/login");
+        if (page !== "login") window.location.replace("/admin/login");
         return false;
       }
       document.querySelectorAll("#admin-email").forEach(function (element) {

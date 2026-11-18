@@ -26,32 +26,35 @@ function close(){if(!v.classList.contains('open'))return;v.classList.remove('ope
 d.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('.wcard');if(c&&!v.contains(e.target)){open(c);return}if(v.classList.contains('open')&&(e.target===v||e.target.closest('[data-vw-close]')))close()});
 d.addEventListener('keydown',function(e){var o=v.classList.contains('open');if(o){if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){e.preventDefault();x.focus()}return}
 if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('wcard')){e.preventDefault();open(e.target)}})}
-/* Single function the form submits through. Point `endpoint` (site.formEndpoint) at the server later,
-   or replace window.sendMessage. It resolves ONLY when the server replies 2xx with {"ok":true}
-   after the message has been stored; every other outcome rejects, so success is never faked. */
+/* The backend confirms success only after the message has been stored. */
 function sendMessage(data,endpoint){if(!endpoint)return Promise.reject({code:'no-endpoint'});
-return fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json().catch(function(){return null}).then(function(j){if(r.ok&&j&&j.ok===true)return j;throw{code:'server'}})},function(){throw{code:'network'}})}
+return fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json().catch(function(){return null}).then(function(j){if(r.ok&&j&&j.ok===true)return j;throw{code:'server',status:r.status,error:j&&j.error,details:j&&j.details}})},function(){throw{code:'network'}})}
 window.sendMessage=window.sendMessage||sendMessage;
 var cbound=false;
 function contact(){var f=$('#cform');if(!f||cbound)return;cbound=true;var busy=false,fm=$('#fmsg'),ok=$('#fok'),hd=$('#fhead');
-var rules={name:function(v){return v.length<2?'Please enter your name.':''},
-email:function(v){return!v?'Please enter your email address.':!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)?'Please enter a valid email address.':''},
-phone:function(v){if(!v)return'';var n=v.replace(/\D/g,'');return(!/^[+\d][\d\s().+\-]*$/.test(v)||n.length<7||n.length>15)?'Please enter a valid phone number, or leave this blank.':''},
-service:function(v){return v?'':'Please choose a service.'},
-message:function(v){return!v?'Please write a message.':v.length<10?'Please write at least 10 characters.':''}};
+var rules={name:function(v){return v.length<2?'Please enter at least 2 characters.':v.length>100?'Please use 100 characters or fewer.':''},
+email:function(v){return!v?'Please enter your email address.':v.length>254?'Email addresses must be 254 characters or fewer.':!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)?'Please enter a valid email address.':''},
+phone:function(v){if(!v)return'';var n=v.replace(/\D/g,'');return v.length>30||!/^[+\d][\d\s().+\-]*$/.test(v)||n.length<7||n.length>15?'Please enter a valid phone number, or leave this blank.':''},
+service:function(v){return!v?'Please choose a service.':v.length>120?'Please choose a valid service.':''},
+message:function(v){return!v?'Please write a message.':v.length<10?'Please write at least 10 characters.':v.length>5000?'Please use 5000 characters or fewer.':''}};
 function check(el){var m=rules[el.name](el.value.trim()),w=el.closest('.fld');w.classList.toggle('bad',!!m);el.setAttribute('aria-invalid',!!m);$('.err',w).textContent=m;return!m}
 function fields(){return $$('input[name],select,textarea',f).filter(function(e){return rules[e.name]})}
 f.addEventListener('focusout',function(e){if(rules[e.target.name])check(e.target)});
 f.addEventListener('change',function(e){if(rules[e.target.name])check(e.target)});
 f.addEventListener('input',function(e){var t=e.target;if(rules[t.name]&&t.closest('.fld').classList.contains('bad'))check(t)});
-function note(code){var em=f.dataset.email;fm.textContent='';fm.appendChild(d.createTextNode(code==='no-endpoint'?"This form isn't connected to an inbox yet, so your message has not been sent.":"Your message couldn't be sent. Please try again."));
+function note(error){var em=f.dataset.email,code=error&&error.code,first=null;
+if(code==='server'&&error.error==='validation_failed'&&error.details){var serverMessages={name:'Please enter a name between 2 and 100 characters.',email:'Please enter a valid email address of 254 characters or fewer.',phone:'Please enter a valid phone number, or leave this blank.',service:'Please choose a service.',message:'Please write between 10 and 5000 characters.'};
+fields().forEach(function(el){if(!Object.prototype.hasOwnProperty.call(error.details,el.name))return;var w=el.closest('.fld'),m=serverMessages[el.name]||'Please check this field and try again.';w.classList.add('bad');el.setAttribute('aria-invalid','true');$('.err',w).textContent=m;if(!first)first=el});
+if(first){fm.hidden=true;first.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'});first.focus({preventScroll:true});return}}
+var text=code==='no-endpoint'?"This form isn't connected to an inbox yet, so your message has not been sent.":code==='network'?"A connection problem prevented your message from being sent. Please check your connection and try again.":code==='server'&&error.status===429?"Too many messages were submitted recently. Please wait a little and try again.":code==='server'&&error.status===503?"Your message couldn't be saved right now. Please try again later.":"Your message couldn't be submitted. Please try again.";
+fm.textContent='';fm.appendChild(d.createTextNode(text));
 if(em){fm.appendChild(d.createTextNode(' You can email me directly at '));var a=d.createElement('a');a.href='mailto:'+em;a.textContent=em;fm.appendChild(a);fm.appendChild(d.createTextNode('.'))}fm.hidden=false}
 f.addEventListener('submit',function(e){e.preventDefault();if(busy)return;fm.hidden=true;
 var bad=fields().filter(function(el){return!check(el)});if(bad.length){bad[0].scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'});bad[0].focus({preventScroll:true});return}
 if(f.elements.website.value)return;
 var data={name:f.elements.name.value.trim(),email:f.elements.email.value.trim(),phone:f.elements.phone.value.trim(),service:f.elements.service.value,message:f.elements.message.value.trim(),website:''};
-var btn=$('button[type=submit]',f);busy=true;btn.disabled=true;f.setAttribute('aria-busy','true');
-Promise.resolve().then(function(){return window.sendMessage(data,f.dataset.endpoint)}).then(function(){f.hidden=true;hd.hidden=true;ok.hidden=false;var h=$('h2',ok);h.focus({preventScroll:true});ok.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'})},function(err){note(err&&err.code);fm.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'})}).then(function(){busy=false;btn.disabled=false;f.removeAttribute('aria-busy')})});
+var btn=$('button[type=submit]',f),label=$('span',btn),idleLabel=label.textContent;busy=true;btn.disabled=true;label.textContent='Sending…';f.setAttribute('aria-busy','true');
+Promise.resolve().then(function(){return window.sendMessage(data,f.dataset.endpoint)}).then(function(){f.hidden=true;hd.hidden=true;ok.hidden=false;var h=$('h2',ok);h.focus({preventScroll:true});ok.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'})},function(err){note(err);if(!fm.hidden)fm.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'})}).then(function(){busy=false;btn.disabled=false;label.textContent=idleLabel;f.removeAttribute('aria-busy')})});
 $('#fagain').onclick=function(){f.reset();fields().forEach(function(el){var w=el.closest('.fld');w.classList.remove('bad');el.removeAttribute('aria-invalid');$('.err',w).textContent=''});fm.hidden=true;ok.hidden=true;f.hidden=false;hd.hidden=false;f.elements.name.focus()}}
 var rbound=false;
 function reviews(){var f=$('#feat');if(!f||rbound)return;rbound=true;

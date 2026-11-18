@@ -10,10 +10,18 @@ functions from `netlify/functions/`. The existing `site/_redirects` rule routes
 `message`, and the optional `website` honeypot. The function limits request
 bodies to 16 KiB, validates and trims accepted values, and stores each message
 before returning `201 {"ok":true}`. It never echoes stored contact data.
+The generated public Contact Form is configured by `site.formEndpoint` in
+`site/content/site.json` and posts to `/api/contact` as JSON. It uses no admin
+session or CSRF token; those remain required only for the admin-only endpoints.
+The browser displays success only for a successful `{ "ok": true }` response
+and retains the entered form values after a failed request.
 
 The in-memory IP limiter is best-effort per warm function instance; it is not a
 distributed or durable rate limit. The honeypot, bounded body, validation, and
 limiter are basic defenses, not a substitute for platform-level abuse controls.
+Automated tests inject in-memory persistence; use a linked Netlify site with
+Netlify Dev/Blobs to test the hosted storage path, then verify the message at
+`/admin/inbox`.
 
 ## Admin authentication
 
@@ -83,20 +91,72 @@ too short, authentication routes return a configuration error rather than
 falling back to insecure defaults.
 
 After deploying with both variables set, create the primary account once over
-HTTPS:
+HTTPS. In PowerShell, prompt for the setup token and password instead of putting
+them in the command line or shell history:
 
-```sh
-curl --include --request POST "https://<your-site>/api/auth/setup" \
-  --header "Content-Type: application/json" \
-  --data '{"setupToken":"<ADMIN_SETUP_TOKEN>","email":"<ADMIN_EMAIL>","password":"<STRONG_PASSWORD>"}'
+```powershell
+$site = "https://<your-site>"
+$email = Read-Host "Admin email"
+$setupTokenSecure = Read-Host "Admin setup token" -AsSecureString
+$passwordSecure = Read-Host "Admin password" -AsSecureString
+
+function ConvertTo-PlainText([System.Security.SecureString]$Value) {
+  $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Value)
+  try {
+    [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)
+  } finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer)
+  }
+}
+
+$setupToken = $null
+$password = $null
+$setupBody = $null
+$result = $null
+try {
+  $setupToken = ConvertTo-PlainText $setupTokenSecure
+  $password = ConvertTo-PlainText $passwordSecure
+  $setupBody = @{
+    setupToken = $setupToken
+    email = $email
+    password = $password
+  } | ConvertTo-Json -Compress
+
+  $result = Invoke-RestMethod `
+    -Uri "$site/api/auth/setup" `
+    -Method Post `
+    -ContentType "application/json" `
+    -Body $setupBody `
+    -ErrorAction Stop
+
+  if ($result.ok -ne $true -or $result.authenticated -ne $true) {
+    throw "Unexpected setup response."
+  }
+  Write-Host "Admin setup succeeded. Sign in at $site/admin/login."
+} catch {
+  throw "Admin setup was not confirmed. Do not print or share response headers or body. Check setup status by attempting a normal login before retrying; setup may already have created the account."
+} finally {
+  $setupToken = $null
+  $password = $null
+  $setupBody = $null
+  $result = $null
+  $setupTokenSecure.Dispose()
+  $passwordSecure.Dispose()
+}
 ```
 
 Use your own email and a unique password of at least 12 UTF-8 bytes. The
-password and setup token are request inputs only; neither is returned or
-logged. Remove `ADMIN_SETUP_TOKEN` from the Netlify environment after setup.
-The session cookie is issued only after the account and session records have
-been stored. If session storage fails after the one-time account write, use the
-same email and password with `/api/auth/login`.
+prompted credentials are converted to plaintext briefly in the PowerShell
+process to send the request; do not enable transcription or logging for this
+session, and close the shell afterward. The command reads only the JSON response
+body, does not display response headers, and does not retain the session cookie.
+The API's `Set-Cookie` headers contain session credentials:
+never display, copy, or share them. The success response body contains only
+authentication status. After setup, sign in through `/admin/login`; remove
+`ADMIN_SETUP_TOKEN` from the Netlify environment and retain
+`SESSION_SIGNING_SECRET`. If setup storage succeeded but session creation
+failed, try the same email and password at `/api/auth/login` before attempting
+setup again.
 
 ## Blob layout
 
