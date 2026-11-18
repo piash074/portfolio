@@ -1,0 +1,3 @@
+const fs=require('fs'),path=require('path'),R=require('./assets/js/render.js'),d=JSON.parse(fs.readFileSync(path.join(__dirname,'content/site.json'),'utf8'));
+const P={home:'index.html',services:'services.html',work:'my-work.html',about:'about.html',testimonials:'testimonials.html',contact:'contact.html'};
+for(const k in P){fs.writeFileSync(path.join(__dirname,P[k]),R.doc(k,d,k==='home'?d.site.title:k==='services'?'Services | '+d.hero.n1+' '+d.hero.n2:k==='work'?'My Work | '+d.hero.n1+' '+d.hero.n2:k==='about'?'About Me | '+d.hero.n1+' '+d.hero.n2:k==='testimonials'?'Testimonials | '+d.hero.n1+' '+d.hero.n2:k==='contact'?'Contact | '+d.hero.n1+' '+d.hero.n2:null));console.log('built',P[k])}
