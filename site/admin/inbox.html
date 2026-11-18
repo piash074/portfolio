@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Contact Inbox | Portfolio Admin</title>
+  <link rel="stylesheet" href="/assets/admin/admin.css">
+  <script src="/assets/admin/admin.js" defer></script>
+</head>
+<body data-admin-page="inbox">
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Portfolio home"><span class="brand-mark">P</span><span>PORTFOLIO <span class="brand-label">ADMIN</span></span></a>
+      <div class="nav-caption">WORKSPACE</div>
+      <nav class="side-nav" aria-label="Admin navigation">
+        <a class="nav-item" href="/admin/dashboard"><span class="nav-icon" aria-hidden="true">⌂</span>Overview</a>
+        <a class="nav-item active" href="/admin/inbox" aria-current="page"><span class="nav-icon" aria-hidden="true">✉</span>Contact inbox</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="account-avatar" aria-hidden="true">A</div>
+        <div class="account-copy"><strong>Administrator</strong><span id="admin-email">Loading account…</span></div>
+        <button class="icon-button logout-button" type="button" aria-label="Log out" title="Log out">↗</button>
+      </div>
+    </aside>
+    <main class="admin-main">
+      <header class="topbar"><div><div class="breadcrumb">Workspace <span>/</span> Inbox</div><h1>Contact inbox</h1></div><a class="button button-quiet" href="/admin/dashboard"><span aria-hidden="true">←</span> Overview</a></header>
+      <section class="inbox-panel panel">
+        <div class="inbox-heading"><div><p class="eyebrow">YOUR CONVERSATIONS</p><h2>Messages <span id="message-total" class="count-pill">—</span></h2><p class="muted">Review and manage contact requests sent through your portfolio.</p></div></div>
+        <div class="toolbar">
+          <label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only">Search messages</span><input id="message-search" type="search" maxlength="200" placeholder="Search name, email or message"></label>
+          <label class="select-label"><span class="sr-only">Filter messages</span><select id="message-filter"><option value="all">All messages</option><option value="unread">Unread</option><option value="read">Read</option></select></label>
+          <label class="select-label"><span class="sr-only">Sort messages</span><select id="message-sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></label>
+        </div>
+        <p id="inbox-error" class="notice notice-error" role="alert" hidden></p>
+        <div id="message-list" class="message-list" aria-live="polite"><p class="loading-state">Loading messages…</p></div>
+        <div id="pagination" class="pagination" hidden>
+          <span id="page-label" class="muted"></span>
+          <div class="page-actions"><button id="prev-page" class="button button-quiet" type="button">← Previous</button><button id="next-page" class="button button-quiet" type="button">Next →</button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <dialog id="message-dialog" class="message-dialog" aria-labelledby="dialog-name">
+    <div class="dialog-top"><span id="dialog-status" class="status-badge"></span><button id="dialog-close" class="icon-button" type="button" aria-label="Close message">×</button></div>
+    <p id="dialog-service" class="eyebrow"></p>
+    <h2 id="dialog-name"></h2>
+    <p id="dialog-email" class="dialog-email"></p>
+    <p id="dialog-date" class="muted"></p>
+    <div id="dialog-message" class="message-content"></div>
+    <p id="dialog-error" class="notice notice-error" role="alert" hidden></p>
+    <div class="dialog-actions"><button id="dialog-read" class="button button-quiet" type="button"></button><button id="dialog-delete" class="button button-danger" type="button">Delete message</button></div>
+  </dialog>
+</body>
+</html>

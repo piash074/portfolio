@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { createAdminApiService } from "./lib/admin.mjs";
 import { createAuthService, isAuthApiPath } from "./lib/auth.mjs";
 import { errorResponse, HttpError, jsonResponse, readJsonBody } from "./lib/http.mjs";
 import { createRateLimiter } from "./lib/rate-limit.mjs";
@@ -12,10 +13,14 @@ const CONTACT_PATHS = new Set([
   "/.netlify/functions/api/contact",
 ]);
 const authService = createAuthService();
+const adminApiService = createAdminApiService({
+  requireAdmin: authService.requireAdmin,
+});
 
 export function createApiHandler({
   persistMessage = saveContactMessage,
   authHandler = authService.handle,
+  adminHandler = adminApiService.handle,
   rateLimiter = createRateLimiter(),
   createId = randomUUID,
   now = () => new Date(),
@@ -27,6 +32,12 @@ export function createApiHandler({
       }
 
       const pathname = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+      if (
+        pathname.startsWith("/api/admin/") ||
+        pathname.startsWith("/.netlify/functions/api/admin/")
+      ) {
+        return adminHandler(request, context);
+      }
       if (!CONTACT_PATHS.has(pathname)) {
         throw new HttpError(404, "not_found");
       }

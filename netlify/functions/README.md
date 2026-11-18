@@ -25,6 +25,11 @@ The `api` function also provides:
 | `/api/auth/login` | `POST` | Verify email/password and issue a new session |
 | `/api/auth/session` | `GET` | Verify the current session without returning credentials or tokens |
 | `/api/auth/logout` | `POST` | Validate CSRF, revoke the session in Blobs, and clear cookies |
+| `/api/admin/dashboard` | `GET` | Return authenticated message statistics, recent messages, and admin email |
+| `/api/admin/messages` | `GET` | List/search/filter/sort/paginate authenticated contact messages |
+| `/api/admin/messages/:id` | `GET` | Return one authenticated message |
+| `/api/admin/messages/:id` | `PATCH` | Mark a message read/unread; requires CSRF |
+| `/api/admin/messages/:id` | `DELETE` | Delete a message; requires CSRF |
 
 Setup accepts JSON `{ "setupToken", "email", "password" }`; login accepts
 `{ "email", "password" }`; logout accepts a JSON object and requires the
@@ -38,6 +43,16 @@ Strict, and Secure for HTTPS/deployed requests. Session records are stored in
 Blobs under a SHA-256 token digest; only the cookie carries the raw random
 session token. Sessions expire after 12 hours. The CSRF value is stored as a
 digest in the session record and is never returned in JSON.
+
+The static Admin Panel is served at `/admin/login`, `/admin/dashboard`, and
+`/admin/inbox`. Dashboard/inbox requests are authorized by the same
+`requireAdmin` session verifier; changing or deleting a message also requires
+the CSRF cookie/header pair. Admin responses expose only message fields needed
+by the UI and never return storage keys, session tokens, or password hashes.
+Searches and exact statistics iterate the Blobs message key listing in pages,
+read records one at a time, and retain only the requested result window. Netlify
+Blobs has no full-text query API, so searches/statistics are O(number of
+messages); see the root README for this limitation.
 
 Five failed login attempts in a 15-minute window trigger a 15-minute lockout.
 The lockout record uses a fixed key and ETag-conditional writes, so attempts

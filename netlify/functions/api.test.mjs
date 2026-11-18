@@ -159,6 +159,23 @@ test("API dispatches authentication paths to the auth service", async () => {
   assert.deepEqual(await response.json(), { ok: true, auth: true });
 });
 
+test("API dispatches admin routes including the Netlify function path", async () => {
+  const handler = createApiHandler({
+    adminHandler: async () => new Response('{"ok":true,"admin":true}', {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+  for (const path of [
+    "/api/admin/dashboard",
+    "/.netlify/functions/api/admin/dashboard",
+  ]) {
+    const response = await handler(request(path, { method: "GET", body: undefined }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { ok: true, admin: true });
+  }
+});
+
 test("API applies the per-instance limit to repeated client submissions", async () => {
   const { handler, saved } = createTestHandler({
     rateLimiter: createRateLimiter({ limit: 1, windowMs: 60_000 }),

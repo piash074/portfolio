@@ -109,3 +109,63 @@ export function validateAdminLoginPayload(payload) {
     password: validateAdminPassword(payload.password),
   };
 }
+
+export function validateMessageListQuery(searchParams) {
+  const allowed = new Set(["page", "limit", "search", "filter", "sort"]);
+  for (const key of searchParams.keys()) {
+    if (!allowed.has(key) || searchParams.getAll(key).length !== 1) {
+      throw new HttpError(422, "validation_failed", { query: "invalid" });
+    }
+  }
+
+  function integerParam(name, fallback, maximum) {
+    const value = searchParams.get(name);
+    if (value === null) return fallback;
+    if (!/^[1-9]\d*$/.test(value) || Number(value) > maximum) {
+      throw new HttpError(422, "validation_failed", { [name]: "invalid" });
+    }
+    return Number(value);
+  }
+
+  const page = integerParam("page", 1, 1000);
+  const limit = integerParam("limit", 20, 50);
+  const search = (searchParams.get("search") || "").trim();
+  const filter = searchParams.has("filter")
+    ? searchParams.get("filter")
+    : "all";
+  const sort = searchParams.has("sort")
+    ? searchParams.get("sort")
+    : "newest";
+  if (search.length > 200) {
+    throw new HttpError(422, "validation_failed", { search: "invalid" });
+  }
+  if (!["all", "unread", "read"].includes(filter)) {
+    throw new HttpError(422, "validation_failed", { filter: "invalid" });
+  }
+  if (!["newest", "oldest"].includes(sort)) {
+    throw new HttpError(422, "validation_failed", { sort: "invalid" });
+  }
+  return { page, limit, search, filter, sort };
+}
+
+export function validateMessageReadPayload(payload) {
+  if (
+    Object.keys(payload).length !== 1 ||
+    typeof payload.unread !== "boolean"
+  ) {
+    throw new HttpError(422, "validation_failed", { unread: "invalid" });
+  }
+  return { unread: payload.unread };
+}
+
+export function validateMessageId(value) {
+  if (
+    typeof value !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  ) {
+    throw new HttpError(404, "not_found");
+  }
+  return value;
+}
