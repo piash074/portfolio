@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import test from "node:test";
-import { createAuthService, isAuthApiPath } from "./auth.mjs";
-import { HttpError } from "./http.mjs";
+import { createAuthService, isAuthApiPath } from "../../../netlify/functions/lib/auth.mjs";
+import { HttpError } from "../../../netlify/functions/lib/http.mjs";
 
 class MemoryBlobsStore {
   constructor() {

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createApiHandler } from "./api.mjs";
-import { createAdminApiService } from "./lib/admin.mjs";
-import { HttpError } from "./lib/http.mjs";
+import { createApiHandler } from "../../netlify/functions/api.mjs";
+import { createAdminApiService } from "../../netlify/functions/lib/admin.mjs";
+import { HttpError } from "../../netlify/functions/lib/http.mjs";
 
 class ContactMessageStore {
   constructor() {

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createApiHandler } from "./api.mjs";
-import { HttpError, readJsonBody } from "./lib/http.mjs";
-import { createRateLimiter } from "./lib/rate-limit.mjs";
-import { validateContactPayload } from "./lib/validation.mjs";
+import { createApiHandler } from "../../netlify/functions/api.mjs";
+import { HttpError, readJsonBody } from "../../netlify/functions/lib/http.mjs";
+import { createRateLimiter } from "../../netlify/functions/lib/rate-limit.mjs";
+import { validateContactPayload } from "../../netlify/functions/lib/validation.mjs";
 
 const validPayload = {
   name: "Test Sender",

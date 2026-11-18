@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { RECORD_KEYS, STORE_NAMES, writeJsonRecord } from "./storage.mjs";
+import { RECORD_KEYS, STORE_NAMES, writeJsonRecord } from "../../../netlify/functions/lib/storage.mjs";
 
 test("storage namespaces and record keys separate private data categories", () => {
   assert.deepEqual(Object.keys(STORE_NAMES), [

@@ -63,7 +63,7 @@ Configure `SESSION_SIGNING_SECRET` (at least 32 random bytes) and
 as Netlify environment variables for initial account setup. After setting up
 the admin, remove `ADMIN_SETUP_TOKEN`. Never place credentials or secrets in
 source files or the public `site/` directory. See
-[netlify/functions/README.md](./netlify/functions/README.md) for the setup
+[netlify/README.md](./netlify/README.md) for the setup
 request and the existing authentication/storage details.
 
 ## Local development and deployment

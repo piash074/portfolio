@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { createAdminApiService } from "./admin.mjs";
-import { HttpError } from "./http.mjs";
+import { createAdminApiService } from "../../../netlify/functions/lib/admin.mjs";
+import { HttpError } from "../../../netlify/functions/lib/http.mjs";
 
 const ids = {
   oldest: "00000000-0000-4000-8000-000000000001",

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createAdminAuthorizer } from "./authorization.mjs";
-import { HttpError } from "./http.mjs";
+import { createAdminAuthorizer } from "../../../netlify/functions/lib/authorization.mjs";
+import { HttpError } from "../../../netlify/functions/lib/http.mjs";
 
 test("admin authorization denies absent or non-admin sessions", async () => {
   const requireAdmin = createAdminAuthorizer(async () => ({ role: "visitor" }));
